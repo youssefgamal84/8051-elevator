@@ -1,12 +1,12 @@
 #include <compiler_defs.h>
 #include <C8051F020_defs.h> // Include SFR declarations
 
-
+// single ended 
 void init_ADC0(void){
 	REF0CN = 0x03; // Vref...use Internal Vref (2.4v)
 	ADC0CF = 0x00; // gain = 1 ... Conversion Clock same as System Clock
-	AMX0CF = 0x00; //
-	AMX0SL = 0x02; // take input from Channel 2
+	AMX0CF = 0x00; // indep .. l2no single ended not diffrential
+	AMX0SL = 0x02; // take input from Channel 2 , AIN2 from table
 	ADC0CN = 0x81; // enable ADC ... start conversion when AD0BUSY=1
 }
 
@@ -15,7 +15,7 @@ void init_DAC0(void){
 	
 }
 
-unsigned int x[2] = {0,0};
+unsigned int x[3] = {0,0,0};
 
 
 void init_intClock(void)
@@ -47,11 +47,15 @@ P1 = 0x00;
 
 	while(1){
 	AD0BUSY = 1;
-	while(!AD0INT); // becomes 1 when conversion ends
+	while(!AD0INT); // flag becomes 1 when conversion ends
 	AD0INT = 0;
+	//shifting
 	x[0] = x[1];
-	x[1]= ADC0;
-	DAC0 = (x[1] + x[0]);
+	x[1] = x[2];
+	x[2]= ADC0;
+	DAC0 = (x[2] + x[1]); // LPF x(n)+x(n-1)
+	// DAC0 = x[2] - x[1]; HPF x(n) - x(n-1)
+	// DAC0 = x[2] - x[0]; notch: x(n) - x(n-2)
 
 	}
 }
